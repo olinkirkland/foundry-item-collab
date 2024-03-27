@@ -1,0 +1,28 @@
+.badge {
+  &--backpack {
+    background-color: #8b4513;
+    color: var(--text-inverted);
+  }
+
+  &--equipment {
+    background-color: #008080;
+    color: var(--text-inverted);
+  }
+
+  &--consumable {
+    background-color: #8b0000;
+    color: var(--text-inverted);
+  }
+
+  &--treasure {
+    background-color: #000033;
+    color: var(--text-inverted);
+  }
+
+  &--shield,
+  &--armor,
+  &--weapon {
+    background-color: #006400;
+    color: var(--text-inverted);
+  }
+}
