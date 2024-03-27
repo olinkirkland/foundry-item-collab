@@ -1,5 +1,5 @@
 <template>
-  <div class="item-panel">
+  <div class="item-panel" v-if="item">
     <h2>Selected Item: {{ item.name }}</h2>
     <div class="wrap-row">
       <p class="badge" :class="'badge--' + item.type">
@@ -8,6 +8,9 @@
     </div>
     <div class="description" v-html="description"></div>
     <pre>{{ item }}</pre>
+  </div>
+  <div v-else>
+    <p>Select an item to view details.</p>
   </div>
 </template>
 
@@ -18,11 +21,12 @@ import { cleanFoundryDescription } from '../util';
 const props = defineProps({
   item: {
     type: Object,
-    required: true
+    required: false
   }
 });
 
 const description = computed(() => {
+  if (!props.item) return null;
   return cleanFoundryDescription(props.item.system.description.value);
 });
 </script>
@@ -38,8 +42,8 @@ const description = computed(() => {
   gap: 0.8rem;
 }
 
-// deep em in the description
 :deep(.description em) {
   color: var(--primary-3);
+  text-decoration: underline;
 }
 </style>

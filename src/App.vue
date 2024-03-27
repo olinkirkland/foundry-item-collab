@@ -1,10 +1,16 @@
 <template>
   <div class="app">
     <header>
-      <h1>{{ tiuri.name }}'s {{ items.length }} items</h1>
+      <section class="controls">
+        <button @click="importJSON">Import JSON</button>
+      </section>
+      <h1 v-if="data">{{ data.name }}'s {{ items.length }} items</h1>
+      <h1 v-else>
+        No data. Import a Foundry Character JSON file to get started.
+      </h1>
     </header>
 
-    <div class="sort-options">
+    <div class="sort-options" v-if="items.length">
       <button @click="onClickSort('name')">
         <i
           v-if="sortMode.by === 'name'"
@@ -51,13 +57,13 @@
       </button>
     </div>
 
-    <div class="container">
+    <div class="container" v-if="items.length">
       <ul class="items-list">
         <li v-for="item in items" :key="item.name">
           <item-card
             :item="item"
             @click="selectedItem = item"
-            :class="{ selected: item._id === selectedItem._id }"
+            :class="{ selected: selectedItem && item._id === selectedItem._id }"
           />
         </li>
       </ul>
@@ -70,8 +76,29 @@
 import { computed, ref } from 'vue';
 import ItemCard from './components/ItemCard.vue';
 import ItemPanel from './components/ItemPanel.vue';
-import tiuri from './data/tiuri.json';
 import { flattenPrice } from './util';
+
+const data = ref(null as any);
+const jsonFromLocalStorage = localStorage.getItem('foundryData');
+if (jsonFromLocalStorage) data.value = JSON.parse(jsonFromLocalStorage);
+
+function importJSON() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      data.value = JSON.parse(e.target?.result as string);
+      localStorage.setItem('foundryData', JSON.stringify(data.value));
+    };
+    reader.readAsText(file);
+  };
+
+  input.click();
+}
 
 const excludeTypes = [
   'ancestry',
@@ -86,8 +113,9 @@ const excludeTypes = [
 const sortMode = ref({ by: 'name', order: 'asc' });
 
 const items = computed(() => {
-  return tiuri.items
-    .filter((item) => {
+  if (!data.value) return [];
+  return data.value.items
+    .filter((item: any) => {
       return !excludeTypes.includes(item.type);
     })
     .sort((a: any, b: any) => {
@@ -127,7 +155,7 @@ function onClickSort(by: string) {
   }
 }
 
-const selectedItem = ref(items.value[0]);
+const selectedItem = ref(null as any);
 </script>
 
 <style lang="scss" scoped>
@@ -139,11 +167,17 @@ const selectedItem = ref(items.value[0]);
 
 header {
   padding: 1.2rem;
+  > section.controls {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1.2rem;
+  }
   > h1 {
     font-size: 4rem;
     text-align: center;
-    border-bottom: 1px solid var(--surface-3);
   }
+  border-bottom: 1px solid var(--surface-3);
 }
 
 .container {
