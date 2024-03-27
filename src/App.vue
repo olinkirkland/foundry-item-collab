@@ -6,7 +6,11 @@
     <div class="container">
       <ul class="items-list">
         <li v-for="item in items" :key="item.name">
-          <item-card :item="item" @click="selectedItem = item" />
+          <item-card
+            :item="item"
+            @click="selectedItem = item"
+            :class="{ selected: item._id === selectedItem._id }"
+          />
         </li>
       </ul>
       <item-panel :item="selectedItem" />
@@ -75,13 +79,10 @@ header {
       height: 100%;
       .item-card {
         cursor: pointer;
-        transition: transform 0.1s;
-        &:hover {
-          transform: translateY(-0.2rem);
-        }
-
-        &:active {
-          transform: translateY(0);
+        &.selected {
+          box-shadow: none;
+          opacity: 0.5;
+          pointer-events: none;
         }
       }
     }

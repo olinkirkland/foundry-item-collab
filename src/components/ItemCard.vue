@@ -1,9 +1,12 @@
 <template>
   <div class="item-card">
     <h2>{{ item.name }}</h2>
-    <p class="badge" :class="'badge--' + item.type">
-      {{ item.type }}
-    </p>
+    <div class="wrap-row">
+      <p class="badge">level {{ item.system.level.value }}</p>
+      <p class="badge" :class="'badge--' + item.type">
+        {{ item.type }}
+      </p>
+    </div>
   </div>
 </template>
 
