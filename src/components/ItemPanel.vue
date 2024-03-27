@@ -4,6 +4,7 @@
     <p class="badge" :class="'badge--' + item.type">
       {{ item.type }}
     </p>
+    <pre>{{ item }}</pre>
   </div>
 </template>
 

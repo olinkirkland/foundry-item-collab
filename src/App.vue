@@ -6,7 +6,7 @@
     <div class="container">
       <ul class="items-list">
         <li v-for="item in items" :key="item.name">
-          <item-card :item="item" />
+          <item-card :item="item" @click="selectedItem = item" />
         </li>
       </ul>
       <item-panel :item="selectedItem" />
@@ -31,13 +31,9 @@ const excludeTypes = [
 ];
 
 const items = computed(() => {
-  return tiuri.items
-    .map((item) => {
-      return { name: item.name, type: item.type };
-    })
-    .filter((item) => {
-      return !excludeTypes.includes(item.type);
-    });
+  return tiuri.items.filter((item) => {
+    return !excludeTypes.includes(item.type);
+  });
 });
 
 const selectedItem = ref(items.value[0]);
@@ -77,6 +73,17 @@ header {
 
     > li {
       height: 100%;
+      .item-card {
+        cursor: pointer;
+        transition: transform 0.1s;
+        &:hover {
+          transform: translateY(-0.2rem);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+      }
     }
   }
 }

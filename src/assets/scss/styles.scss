@@ -87,10 +87,13 @@ button:not(.link) {
 }
 
 pre {
-  background-color: var(--surface-2);
-  padding: 1rem;
   border-radius: 5px;
-  box-shadow: var(--shadow-light);
+  background-color: #292836;
+  color: #f8f8f2;
+  padding: 1rem;
+  font-family: monospace;
+  width: 100%;
+  overflow-x: auto;
 }
 
 input[type='text'] {
