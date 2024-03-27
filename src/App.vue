@@ -69,7 +69,7 @@ header {
 
   ul {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(36rem, 1fr));
     gap: 1.2rem;
     height: min-content;
     max-height: 100%;

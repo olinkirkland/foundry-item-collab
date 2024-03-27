@@ -25,7 +25,6 @@ if (false) console.log(props.item);
 .item-panel {
   padding: 1.2rem;
   height: 100%;
-  border: 1px solid black;
   overflow: auto;
 
   display: flex;
