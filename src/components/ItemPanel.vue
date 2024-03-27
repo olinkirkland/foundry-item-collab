@@ -6,11 +6,15 @@
         {{ item.type }}
       </p>
     </div>
+    <div class="description" v-html="description"></div>
     <pre>{{ item }}</pre>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { cleanFoundryDescription } from '../util';
+
 const props = defineProps({
   item: {
     type: Object,
@@ -18,7 +22,9 @@ const props = defineProps({
   }
 });
 
-if (false) console.log(props.item);
+const description = computed(() => {
+  return cleanFoundryDescription(props.item.system.description.value);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -30,5 +36,10 @@ if (false) console.log(props.item);
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+}
+
+// deep em in the description
+:deep(.description em) {
+  color: var(--primary-3);
 }
 </style>

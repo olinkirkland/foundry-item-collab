@@ -14,3 +14,8 @@ export function flattenPrice(price: {
   if (price.cp) flat += price.cp / 100;
   return flat;
 }
+
+export function cleanFoundryDescription(content: string) {
+  // TODO
+  return content;
+}
