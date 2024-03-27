@@ -11,50 +11,58 @@
     </header>
 
     <div class="sort-options" v-if="items.length">
-      <button @click="onClickSort('name')">
-        <i
-          v-if="sortMode.by === 'name'"
-          :class="
-            sortMode.order === 'asc'
-              ? 'fas fa-sort-alpha-down'
-              : 'fas fa-sort-alpha-up'
-          "
-        ></i>
-        Sort by Name
-      </button>
-      <button @click="onClickSort('level')">
-        <i
-          v-if="sortMode.by === 'level'"
-          :class="
-            sortMode.order === 'asc'
-              ? 'fas fa-sort-numeric-down'
-              : 'fas fa-sort-numeric-up'
-          "
-        ></i>
-        Sort by Level
-      </button>
-      <button @click="onClickSort('type')">
-        <i
-          v-if="sortMode.by === 'type'"
-          :class="
-            sortMode.order === 'asc'
-              ? 'fas fa-sort-alpha-down'
-              : 'fas fa-sort-alpha-up'
-          "
-        ></i>
-        Sort by Type
-      </button>
-      <button @click="onClickSort('price')">
-        <i
-          v-if="sortMode.by === 'price'"
-          :class="
-            sortMode.order === 'asc'
-              ? 'fas fa-sort-numeric-down'
-              : 'fas fa-sort-numeric-up'
-          "
-        ></i>
-        Sort by Price
-      </button>
+      <section>
+        <button @click="onClickSort('name')">
+          <i
+            v-if="sortMode.by === 'name'"
+            :class="
+              sortMode.order === 'asc'
+                ? 'fas fa-sort-alpha-down'
+                : 'fas fa-sort-alpha-up'
+            "
+          ></i>
+          Sort by Name
+        </button>
+        <button @click="onClickSort('level')">
+          <i
+            v-if="sortMode.by === 'level'"
+            :class="
+              sortMode.order === 'asc'
+                ? 'fas fa-sort-numeric-down'
+                : 'fas fa-sort-numeric-up'
+            "
+          ></i>
+          Sort by Level
+        </button>
+        <button @click="onClickSort('type')">
+          <i
+            v-if="sortMode.by === 'type'"
+            :class="
+              sortMode.order === 'asc'
+                ? 'fas fa-sort-alpha-down'
+                : 'fas fa-sort-alpha-up'
+            "
+          ></i>
+          Sort by Type
+        </button>
+        <button @click="onClickSort('price')">
+          <i
+            v-if="sortMode.by === 'price'"
+            :class="
+              sortMode.order === 'asc'
+                ? 'fas fa-sort-numeric-down'
+                : 'fas fa-sort-numeric-up'
+            "
+          ></i>
+          Sort by Price
+        </button>
+      </section>
+      <section>
+        <p>
+          Inventory Value: <strong>${{ inventoryValue }}</strong>
+        </p>
+        <!-- <p>For Sale Value: ${{ saleValue }}</p> -->
+      </section>
     </div>
 
     <div class="container" v-if="items.length">
@@ -146,6 +154,19 @@ const items = computed(() => {
     });
 });
 
+const inventoryValue = computed(() => {
+  const allItemValues = items.value.map((item: any) => {
+    const flatPrice = flattenPrice(item.system.price.value);
+    return flatPrice * (item.system.quantity || 0);
+  });
+  let total = 0;
+  for (const value of allItemValues) {
+    total += value;
+    total = Math.round((total + value) * 100) / 100;
+  }
+  return total;
+});
+
 function onClickSort(by: string) {
   if (sortMode.value.by === by) {
     sortMode.value.order = sortMode.value.order === 'asc' ? 'desc' : 'asc';
@@ -213,7 +234,14 @@ header {
 .sort-options {
   padding: 1.2rem;
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  gap: 1.2rem;
+  gap: 0.8rem;
+
+  > section {
+    display: flex;
+    justify-content: center;
+    gap: 1.2rem;
+  }
 }
 </style>

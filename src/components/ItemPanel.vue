@@ -1,5 +1,5 @@
 <template>
-  <div class="item-panel" v-if="item">
+  <div v-if="item" class="item-panel">
     <h2>Selected Item: {{ item.name }}</h2>
     <div class="wrap-row">
       <p class="badge" :class="'badge--' + item.type">
@@ -7,15 +7,18 @@
       </p>
     </div>
     <div class="description" v-html="description"></div>
-    <pre>{{ item }}</pre>
+    <button @click="showJSON = !showJSON">
+      {{ showJSON ? 'Hide' : 'Show' }} JSON
+    </button>
+    <pre v-if="showJSON" class="json">{{ item }}</pre>
   </div>
-  <div v-else>
+  <div v-else class="item-panel">
     <p>Select an item to view details.</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { cleanFoundryDescription } from '../util';
 
 const props = defineProps({
@@ -24,6 +27,8 @@ const props = defineProps({
     required: false
   }
 });
+
+const showJSON = ref(false);
 
 const description = computed(() => {
   if (!props.item) return null;

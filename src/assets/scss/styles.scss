@@ -46,6 +46,7 @@ button {
   cursor: pointer;
   border: none;
   border-radius: 5px;
+  width: fit-content;
 
   &:hover {
     background-color: var(--surface-3);
@@ -161,8 +162,8 @@ button.close {
   display: flex;
   background-color: var(--surface-2);
   width: fit-content;
-  padding: 0.4rem 0.8rem;
-  border-radius: 5px;
+  padding: 0.4rem 1rem;
+  border-radius: 99px;
 }
 
 .wrap-row {
