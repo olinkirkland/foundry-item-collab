@@ -39,9 +39,20 @@
 }
 
 button {
-  i {
-    font-size: 1.4rem;
-    margin-right: 0.4rem;
+  // Small surface colored buttons, no transition
+  background-color: var(--surface-2);
+  color: var(--text);
+  padding: 0.8rem 1.6rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+
+  &:hover {
+    background-color: var(--surface-3);
+  }
+
+  &.active {
+    text-decoration: underline;
   }
 }
 
@@ -65,25 +76,6 @@ button.link {
   color: var(--primary-1);
   text-decoration: underline;
   white-space: nowrap;
-}
-
-a:not(.link),
-button:not(.link) {
-  width: fit-content;
-  white-space: nowrap;
-  color: var(--text-inverted);
-  background-color: var(--primary-1);
-  padding: 0.8rem 1.6rem;
-  text-decoration: none;
-  border-radius: 3px;
-  // transition: all 0.2s ease-in-out;
-  bottom: 0;
-  position: relative;
-  cursor: pointer;
-
-  &:hover {
-    background-color: var(--primary-0);
-  }
 }
 
 pre {

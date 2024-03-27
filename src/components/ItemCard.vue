@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { flattenPrice } from '../util';
 
 const props = defineProps({
   item: {
@@ -29,14 +30,7 @@ const props = defineProps({
 
 const flattenedPrice = computed(() => {
   const itemPrice = props.item.system.price.value;
-  // { pp: 0, gp: 0, sp: 0, cp: 0 }
-  // Add them up where pp = 10, gp = 1, sp = 0.1, cp = 0.01
-  let flat = 0;
-  if (itemPrice.pp) flat += itemPrice.pp * 10;
-  if (itemPrice.gp) flat += itemPrice.gp;
-  if (itemPrice.sp) flat += itemPrice.sp / 10;
-  if (itemPrice.cp) flat += itemPrice.cp / 100;
-  return flat;
+  return flattenPrice(itemPrice);
 });
 
 const quantity = computed(() => {
