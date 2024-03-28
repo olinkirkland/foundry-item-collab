@@ -70,7 +70,11 @@
       <div class="row">
         <p>{{ items.length }} Items</p>
         <p class="muted">|</p>
-        <p>Total Value: ${{ totalValue }}</p>
+        <p>
+          Total Value:&nbsp;
+          <i class="fas fa-coins"></i>
+          {{ totalValue }}
+        </p>
         <button class="change-user" @click="me = null">Change User</button>
       </div>
       <ul class="items-list">
@@ -80,10 +84,13 @@
             <header>
               <h2>
                 <span class="name">{{ item.name }}</span>
-                <span class="muted" v-if="item.quantity > 1">
-                  ({{ item.quantity }}x ${{ item.price }})&nbsp;
-                </span>
-                <span>${{ item.price * item.quantity }}</span>
+                <div>
+                  <span class="muted" v-if="item.quantity > 1">
+                    ({{ item.quantity }}x ${{ item.price }})&nbsp;
+                  </span>
+                  <i class="fas fa-coins"></i>
+                  <span>{{ item.price * item.quantity }}</span>
+                </div>
               </h2>
             </header>
             <div class="attributes">
@@ -285,6 +292,11 @@ ul.items-list {
           flex: 1;
           overflow: hidden;
           text-overflow: ellipsis;
+        }
+
+        > div {
+          display: flex;
+          gap: 0.4rem;
         }
       }
     }
