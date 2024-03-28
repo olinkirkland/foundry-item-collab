@@ -16,6 +16,7 @@
             <ul class="users-list">
               <li v-for="user in users" :key="user._id">
                 <button @click="setUserById(user._id)">
+                  <i v-if="user.isGM" class="fas fa-crown"></i>
                   {{ user.name }}{{ user.isGM ? ' (GM)' : '' }}
                 </button>
               </li>
