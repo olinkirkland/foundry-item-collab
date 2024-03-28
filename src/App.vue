@@ -74,9 +74,15 @@
         <p>{{ sortedAndFilteredItems.length }}/{{ items.length }} Items</p>
         <p class="muted">|</p>
         <p>
-          Total Value:&nbsp;
+          Owned Items:&nbsp;
           <i class="fas fa-coins"></i>
           {{ totalValue }}
+        </p>
+        <p class="muted">|</p>
+        <p>
+          For Sale:&nbsp;
+          <i class="fas fa-coins"></i>
+          {{ totalSaleValue }}
         </p>
         <p class="muted">|</p>
         <p>Sort by</p>
