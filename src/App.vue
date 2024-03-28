@@ -75,6 +75,12 @@
           <i class="fas fa-coins"></i>
           {{ totalValue }}
         </p>
+        <p class="muted">|</p>
+        <toggle-button v-model="showAllItems">
+          <p>
+            {{ showAllItems ? 'Show only my items' : "Show everybody's items" }}
+          </p>
+        </toggle-button>
         <button class="change-user" @click="me = null">Change User</button>
       </div>
       <ul class="items-list">
@@ -126,6 +132,10 @@ axios.defaults.baseURL =
     ? 'http://localhost:3005'
     : 'https://foundry-item-collab-server-production.up.railway.app/';
 
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+const showAllItems = ref(false);
 const isLoaded = ref(false);
 const users = ref([] as User[]);
 const items = ref([] as Item[]);

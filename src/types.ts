@@ -14,4 +14,6 @@ export type Item = {
   price: number;
   quantity: number;
   bulk: number;
+  flaggedForSale: boolean;
+  flaggedForPersonal: boolean;
 };
