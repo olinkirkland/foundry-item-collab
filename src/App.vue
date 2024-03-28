@@ -120,12 +120,24 @@
           Level
         </button>
         <p class="muted">|</p>
-        <button @click="showOnlyMyOwnedItems = !showOnlyMyOwnedItems">
+        <button
+          v-if="!me?.isGM"
+          @click="showOnlyMyOwnedItems = !showOnlyMyOwnedItems"
+        >
           {{
             showOnlyMyOwnedItems
               ? `Show All (${items.length})`
               : `Show Only my Items (${
                   items.filter((i) => i.owner == me?.name).length
+                })`
+          }}
+        </button>
+        <button v-else @click="showOnlyItemsForSale = !showOnlyItemsForSale">
+          {{
+            showOnlyItemsForSale
+              ? `Show All (${items.length})`
+              : `Show Only Items for Sale (${
+                  items.filter((i) => !i.owner).length
                 })`
           }}
         </button>
@@ -217,6 +229,7 @@ const users = ref([] as User[]);
 const items = ref([] as Item[]);
 const me = ref(null as User | null);
 const showOnlyMyOwnedItems = ref(false);
+const showOnlyItemsForSale = ref(false);
 const sortedAndFilteredItems = computed(() => {
   return items.value
     .sort((a, b) => {
@@ -238,7 +251,12 @@ const sortedAndFilteredItems = computed(() => {
       }
     })
     .filter((item) =>
-      showOnlyMyOwnedItems.value ? item.owner === me.value?.name : true
+      !me?.value?.isGM && showOnlyMyOwnedItems.value
+        ? item.owner === me.value?.name
+        : true
+    )
+    .filter((item) =>
+      me?.value?.isGM && showOnlyItemsForSale.value ? !item.owner : true
     );
 });
 
