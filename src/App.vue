@@ -84,8 +84,7 @@
           <i class="fas fa-coins"></i>
           {{ totalSaleValue }}
         </p>
-        <p class="muted">|</p>
-        <p>Sort by</p>
+        <p class="sort-by">Sort by</p>
         <button
           @click="sort('name')"
           :class="sortBy.key === 'name' ? 'active' : ''"
@@ -119,8 +118,18 @@
           ></i>
           Level
         </button>
-
-        <button class="change-user" @click="me = null">Change User</button>
+        <p class="muted">|</p>
+        <button @click="showOnlyMyOwnedItems = !showOnlyMyOwnedItems">
+          {{
+            showOnlyMyOwnedItems
+              ? `Show All (${items.length})`
+              : `Show Only my Items (${
+                  items.filter((i) => i.owner == me?.name).length
+                })`
+          }}
+        </button>
+        <p class="muted">|</p>
+        <button @click="me = null">Change User</button>
       </div>
       <ul class="items-list">
         <li v-for="item in sortedAndFilteredItems" :key="item.id">
@@ -206,25 +215,30 @@ const isLoaded = ref(false);
 const users = ref([] as User[]);
 const items = ref([] as Item[]);
 const me = ref(null as User | null);
+const showOnlyMyOwnedItems = ref(false);
 const sortedAndFilteredItems = computed(() => {
-  return items.value.sort((a, b) => {
-    const { key, order } = sortBy.value;
-    switch (key) {
-      case 'name':
-        if (a.name === b.name) return a.id.localeCompare(b.id);
-        return order === 'asc'
-          ? a.name.localeCompare(b.name)
-          : b.name.localeCompare(a.name);
-      case 'price':
-        if (a.price === b.price) return a.id.localeCompare(b.id);
-        return order === 'asc' ? a.price - b.price : b.price - a.price;
-      case 'level':
-        if (a.level === b.level) return a.id.localeCompare(b.id);
-        return order === 'asc' ? a.level - b.level : b.level - a.level;
-      default:
-        return 0;
-    }
-  });
+  return items.value
+    .sort((a, b) => {
+      const { key, order } = sortBy.value;
+      switch (key) {
+        case 'name':
+          if (a.name === b.name) return a.id.localeCompare(b.id);
+          return order === 'asc'
+            ? a.name.localeCompare(b.name)
+            : b.name.localeCompare(a.name);
+        case 'price':
+          if (a.price === b.price) return a.id.localeCompare(b.id);
+          return order === 'asc' ? a.price - b.price : b.price - a.price;
+        case 'level':
+          if (a.level === b.level) return a.id.localeCompare(b.id);
+          return order === 'asc' ? a.level - b.level : b.level - a.level;
+        default:
+          return 0;
+      }
+    })
+    .filter((item) =>
+      showOnlyMyOwnedItems.value ? item.owner === me.value?.name : true
+    );
 });
 
 const sortBy = ref({
@@ -446,7 +460,7 @@ ul.items-list {
   }
 }
 
-.change-user {
+.sort-by {
   margin-left: auto;
 }
 
