@@ -3,6 +3,9 @@
     <header>
       <section class="controls">
         <button @click="importJSON">Import JSON</button>
+        <button :class="{ disabled: !data }" @click="exportCSV">
+          Export CSV
+        </button>
       </section>
       <h1 v-if="data">{{ data.name }}'s {{ items.length }} items</h1>
       <h1 v-else>
@@ -106,6 +109,27 @@ function importJSON() {
   };
 
   input.click();
+}
+
+function exportCSV() {
+  const csvHeader = 'Name,Type,Level,Price,Quantity,Total Value\n';
+  const csvData = items.value
+    .map((item: any) => {
+      return `${item.name},${item.type},${
+        item.system.level.value
+      },${flattenPrice(item.system.price.value)},${item.system.quantity || 0},${
+        flattenPrice(item.system.price.value) * (item.system.quantity || 0)
+      }`;
+    })
+    .join('\n');
+  const csv = csvHeader + csvData;
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'inventory.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 const excludeTypes = [
