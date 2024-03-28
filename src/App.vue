@@ -68,7 +68,10 @@
     <!-- All users -->
     <div class="container" v-if="me">
       <div class="row">
-        <p>{{ items.length }} Items</p>
+        <button @click="fetchItems">
+          <i class="fas fa-sync"></i>
+        </button>
+        <p>{{ sortedAndFilteredItems.length }}/{{ items.length }} Items</p>
         <p class="muted">|</p>
         <p>
           Total Value:&nbsp;
@@ -76,15 +79,45 @@
           {{ totalValue }}
         </p>
         <p class="muted">|</p>
-        <toggle-button v-model="showAllItems">
-          <p>
-            {{ showAllItems ? 'Show only my items' : "Show everybody's items" }}
-          </p>
-        </toggle-button>
+        <p>Sort by</p>
+        <button
+          @click="sort('name')"
+          :class="sortBy.key === 'name' ? 'active' : ''"
+        >
+          <i
+            :class="`fas fa-sort-alpha-${
+              sortBy.key === 'name' && sortBy.order === 'asc' ? 'down' : 'up'
+            }`"
+          ></i>
+          Name
+        </button>
+        <button
+          @click="sort('price')"
+          :class="sortBy.key === 'price' ? 'active' : ''"
+        >
+          <i
+            :class="`fas fa-sort-numeric-${
+              sortBy.key === 'price' && sortBy.order === 'asc' ? 'down' : 'up'
+            }`"
+          ></i>
+          Price
+        </button>
+        <button
+          @click="sort('level')"
+          :class="sortBy.key === 'level' ? 'active' : ''"
+        >
+          <i
+            :class="`fas fa-sort-numeric-${
+              sortBy.key === 'level' && sortBy.order === 'asc' ? 'down' : 'up'
+            }`"
+          ></i>
+          Level
+        </button>
+
         <button class="change-user" @click="me = null">Change User</button>
       </div>
       <ul class="items-list">
-        <li v-for="item in items" :key="item.id">
+        <li v-for="item in sortedAndFilteredItems" :key="item.id">
           <panel>
             <p v-if="item.level > 0" class="level">Level {{ item.level }}</p>
             <header>
@@ -135,11 +168,44 @@ axios.defaults.baseURL =
 axios.defaults.withCredentials = true;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
-const showAllItems = ref(false);
 const isLoaded = ref(false);
 const users = ref([] as User[]);
 const items = ref([] as Item[]);
 const me = ref(null as User | null);
+const sortedAndFilteredItems = computed(() => {
+  return items.value.sort((a, b) => {
+    const { key, order } = sortBy.value;
+    switch (key) {
+      case 'name':
+        if (a.name === b.name) return a.id.localeCompare(b.id);
+        return order === 'asc'
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      case 'price':
+        if (a.price === b.price) return a.id.localeCompare(b.id);
+        return order === 'asc' ? a.price - b.price : b.price - a.price;
+      case 'level':
+        if (a.level === b.level) return a.id.localeCompare(b.id);
+        return order === 'asc' ? a.level - b.level : b.level - a.level;
+      default:
+        return 0;
+    }
+  });
+});
+
+const sortBy = ref({
+  key: 'name' as string,
+  order: 'asc' as 'asc' | 'desc'
+});
+
+function sort(key: string) {
+  if (sortBy.value.key === key) {
+    sortBy.value.order = sortBy.value.order === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortBy.value.key = key;
+    sortBy.value.order = 'asc';
+  }
+}
 
 (async () => {
   await fetchData();
