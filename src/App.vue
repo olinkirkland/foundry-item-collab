@@ -118,7 +118,7 @@
       </div>
       <ul class="items-list">
         <li v-for="item in sortedAndFilteredItems" :key="item.id">
-          <panel>
+          <panel :class="{ 'for-sale': !item.owner }">
             <p v-if="item.level > 0" class="level">Level {{ item.level }}</p>
             <header>
               <h2>
@@ -133,9 +133,11 @@
               </h2>
             </header>
             <div class="attributes">
-              <div>
-                <i class="fas fa-mitten"></i>
+              <div v-if="item.owner">
                 <p>{{ item.owner }}</p>
+              </div>
+              <div v-else>
+                <p>For Sale</p>
               </div>
               <div>
                 <p>
@@ -147,6 +149,31 @@
                 </p>
               </div>
             </div>
+            <div v-if="me.isGM" class="gm-give-item">
+              <button
+                @click="giveItem(item.id, null)"
+                :class="{ active: !item.owner }"
+              >
+                <i class="fas fa-coins"></i>
+                Sell</button
+              ><button
+                v-for="user in users.filter((u) => !u.isGM)"
+                :class="{ active: item.owner === user.name }"
+                :key="user._id"
+                @click="giveItem(item.id, user.name)"
+              >
+                <i class="fas fa-mitten"></i>
+                {{ user.name }}
+              </button>
+            </div>
+
+            <button
+              v-else
+              @click="giveItem(item.id, !!item.owner ? null : me?.name)"
+            >
+              <i :class="item.owner ? 'fas fa-coins' : 'fas fa-mitten'"></i>
+              {{ item.owner ? 'Sell' : 'Claim' }}
+            </button>
           </panel>
         </li>
       </ul>
@@ -159,6 +186,7 @@ import axios from 'axios';
 import { computed, ref } from 'vue';
 import Panel from './components/Panel.vue';
 import { Item, User } from './types';
+
 // If running on localhost, use the local server
 axios.defaults.baseURL =
   location.hostname === 'localhost'
@@ -234,6 +262,12 @@ async function fetchItems() {
   items.value = data;
 }
 
+async function giveItem(itemId: string, userId: string | null) {
+  const item = await axios.put(`/items/${itemId}/owner`, { owner: userId });
+  const index = items.value.findIndex((i) => i.id === itemId);
+  items.value[index] = item.data;
+}
+
 function uploadFoundryFile() {
   const input = document.createElement('input');
   input.type = 'file';
@@ -242,6 +276,7 @@ function uploadFoundryFile() {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
 
+    isLoaded.value = false;
     const fileData = await file.text();
     const minifiedFileData = JSON.stringify(JSON.parse(fileData));
     await axios.post('/upload', minifiedFileData, {
@@ -283,14 +318,24 @@ function downloadCSV() {
 
 async function eraseAllData() {
   confirm('Are you sure you want to erase ALL the data?') &&
-    (await axios.delete('/erase')) &&
+    ((isLoaded.value = false), await axios.delete('/erase')) &&
     fetchData();
 }
 
 const totalValue = computed(() => {
   let total = 0;
   items.value.forEach((item) => {
-    total = Math.round((total + item.price * item.quantity) * 100) / 100;
+    if (item.owner)
+      total = Math.round((total + item.price * item.quantity) * 100) / 100;
+  });
+  return total;
+});
+
+const totalSaleValue = computed(() => {
+  let total = 0;
+  items.value.forEach((item) => {
+    if (!item.owner)
+      total = Math.round((total + item.price * item.quantity) * 100) / 100;
   });
   return total;
 });
@@ -411,5 +456,15 @@ ul.items-list {
   border-radius: 5px;
   background-color: var(--dark);
   color: var(--light);
+}
+
+.for-sale {
+  background-color: var(--yellow);
+}
+
+.gm-give-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 </style>
