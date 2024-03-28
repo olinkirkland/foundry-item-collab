@@ -120,7 +120,11 @@ import axios from 'axios';
 import { computed, ref } from 'vue';
 import Panel from './components/Panel.vue';
 import { Item, User } from './types';
-axios.defaults.baseURL = 'http://localhost:3005';
+// If running on localhost, use the local server
+axios.defaults.baseURL =
+  location.hostname === 'localhost'
+    ? 'http://localhost:3005'
+    : 'https://foundry-item-collab-server-production.up.railway.app/';
 
 const isLoaded = ref(false);
 const users = ref([] as User[]);
