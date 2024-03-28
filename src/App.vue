@@ -1,271 +1,323 @@
 <template>
-  <div class="app">
-    <header>
-      <section class="controls">
-        <button @click="importJSON">Import JSON</button>
-        <button :class="{ disabled: !data }" @click="exportCSV">
-          Export CSV
-        </button>
-      </section>
-      <h1 v-if="data">{{ data.name }}'s {{ items.length }} items</h1>
-      <h1 v-else>
-        No data. Import a Foundry Character JSON file to get started.
-      </h1>
-    </header>
-
-    <div class="sort-options" v-if="items.length">
-      <section>
-        <button @click="onClickSort('name')">
-          <i
-            v-if="sortMode.by === 'name'"
-            :class="
-              sortMode.order === 'asc'
-                ? 'fas fa-sort-alpha-down'
-                : 'fas fa-sort-alpha-up'
-            "
-          ></i>
-          Sort by Name
-        </button>
-        <button @click="onClickSort('level')">
-          <i
-            v-if="sortMode.by === 'level'"
-            :class="
-              sortMode.order === 'asc'
-                ? 'fas fa-sort-numeric-down'
-                : 'fas fa-sort-numeric-up'
-            "
-          ></i>
-          Sort by Level
-        </button>
-        <button @click="onClickSort('type')">
-          <i
-            v-if="sortMode.by === 'type'"
-            :class="
-              sortMode.order === 'asc'
-                ? 'fas fa-sort-alpha-down'
-                : 'fas fa-sort-alpha-up'
-            "
-          ></i>
-          Sort by Type
-        </button>
-        <button @click="onClickSort('price')">
-          <i
-            v-if="sortMode.by === 'price'"
-            :class="
-              sortMode.order === 'asc'
-                ? 'fas fa-sort-numeric-down'
-                : 'fas fa-sort-numeric-up'
-            "
-          ></i>
-          Sort by Price
-        </button>
-      </section>
-      <section>
-        <p>
-          Inventory Value: <strong>${{ inventoryValue }}</strong>
-        </p>
-        <!-- <p>For Sale Value: ${{ saleValue }}</p> -->
-      </section>
+  <div class="layout" v-if="!isLoaded">
+    <div class="container container--center">
+      <panel>
+        <h2>Loading...</h2>
+      </panel>
+    </div>
+  </div>
+  <div class="layout" v-else>
+    <!-- Choose user -->
+    <div class="container container--center" v-if="!me">
+      <panel>
+        <h1>Who are you?</h1>
+        <div class="users">
+          <div v-if="users.length">
+            <ul class="users-list">
+              <li v-for="user in users" :key="user._id">
+                <button @click="setUserById(user._id)">
+                  {{ user.name }}{{ user.isGM ? ' (GM)' : '' }}
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div v-else>
+            <p>No users found.</p>
+          </div>
+        </div>
+      </panel>
     </div>
 
-    <div class="container" v-if="items.length">
+    <!-- GM only-->
+    <div class="container" v-if="me?.isGM">
+      <panel>
+        <h1>GM Only</h1>
+        <div class="manage-data">
+          <div class="controls">
+            <button @click="uploadFoundryFile">
+              <i class="fas fa-upload"></i>
+              Upload Foundry Character File (*.json)
+            </button>
+            <div class="row">
+              <button
+                @click="eraseAllData"
+                :style="{
+                  backgroundColor: 'var(--grey)',
+                  color: 'var(--dark)'
+                }"
+              >
+                <i class="fas fa-trash"></i>
+                Erase All Data
+              </button>
+              <button @click="downloadCSV">
+                <i class="fas fa-file-csv"></i>
+                Download CSV
+              </button>
+            </div>
+          </div>
+          <div class="file-list">
+            <panel v-for="user in users.filter((u) => !u.isGM)" :key="user._id">
+              <i class="fas fa-file-archive"></i>
+              <p>{{ user.name }}</p>
+            </panel>
+          </div>
+        </div>
+      </panel>
+    </div>
+
+    <!-- All users -->
+    <div class="container" v-if="me">
+      <div class="row">
+        <p>{{ items.length }} Items</p>
+        <p class="muted">|</p>
+        <p>Total Value: ${{ totalValue }}</p>
+        <button class="change-user" @click="me = null">Change User</button>
+      </div>
       <ul class="items-list">
-        <li v-for="item in items" :key="item.name">
-          <item-card
-            :item="item"
-            @click="selectedItem = item"
-            :class="{ selected: selectedItem && item._id === selectedItem._id }"
-          />
+        <li v-for="item in items" :key="item.id">
+          <panel>
+            <p v-if="item.level > 0" class="level">Level {{ item.level }}</p>
+            <header>
+              <h2>
+                <span class="name">{{ item.name }}</span>
+                <span class="muted" v-if="item.quantity > 1">
+                  ({{ item.quantity }}x ${{ item.price }})&nbsp;
+                </span>
+                <span>${{ item.price * item.quantity }}</span>
+              </h2>
+            </header>
+            <div class="attributes">
+              <div>
+                <i class="fas fa-mitten"></i>
+                <p>{{ item.owner }}</p>
+              </div>
+              <div>
+                <p>
+                  <span v-if="item.quantity > 1" class="muted">
+                    ({{ item.quantity }}x {{ item.bulk }})&nbsp;
+                  </span>
+                  <i class="fas fa-weight-hanging"></i>
+                  {{ item.bulk * item.quantity }}
+                </p>
+              </div>
+            </div>
+          </panel>
         </li>
       </ul>
-      <item-panel :item="selectedItem" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import axios from 'axios';
 import { computed, ref } from 'vue';
-import ItemCard from './components/ItemCard.vue';
-import ItemPanel from './components/ItemPanel.vue';
-import { flattenPrice } from './util';
+import Panel from './components/Panel.vue';
+import { Item, User } from './types';
+axios.defaults.baseURL = 'http://localhost:3005';
 
-const data = ref(null as any);
-const jsonFromLocalStorage = localStorage.getItem('foundryData');
-if (jsonFromLocalStorage) data.value = JSON.parse(jsonFromLocalStorage);
+const isLoaded = ref(false);
+const users = ref([] as User[]);
+const items = ref([] as Item[]);
+const me = ref(null as User | null);
 
-function importJSON() {
+(async () => {
+  await fetchData();
+  const storedUserId = localStorage.getItem('user-id');
+  if (storedUserId) setUserById(storedUserId);
+})();
+
+function setUserById(id: string) {
+  me.value = users.value.find((user) => user._id === id) || null;
+  localStorage.setItem('user-id', id);
+}
+
+async function fetchData() {
+  isLoaded.value = false;
+  await Promise.all([fetchUsers(), fetchItems()]);
+  isLoaded.value = true;
+}
+
+async function fetchUsers() {
+  const { data } = await axios.get<User[]>('/users');
+  users.value = data;
+}
+
+async function fetchItems() {
+  const { data } = await axios.get<Item[]>('/items');
+  items.value = data;
+}
+
+function uploadFoundryFile() {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json';
-  input.onchange = (e) => {
+  input.onchange = async (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      data.value = JSON.parse(e.target?.result as string);
-      localStorage.setItem('foundryData', JSON.stringify(data.value));
-    };
-    reader.readAsText(file);
-  };
 
+    const fileData = await file.text();
+    const minifiedFileData = JSON.stringify(JSON.parse(fileData));
+    await axios.post('/upload', minifiedFileData, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    fetchData();
+  };
   input.click();
 }
 
-function exportCSV() {
-  const csvHeader = 'Name,Type,Level,Price,Quantity,Total Value\n';
-  const csvData = items.value
-    .map((item: any) => {
-      return `${item.name},${item.type},${
-        item.system.level.value
-      },${flattenPrice(item.system.price.value)},${item.system.quantity || 0},${
-        flattenPrice(item.system.price.value) * (item.system.quantity || 0)
-      }`;
-    })
+function downloadCSV() {
+  // Item Name, Owner, Type, Price, Quantity, Total Price
+  const tableHeader = [
+    'Item Name',
+    'Owner',
+    'Type',
+    'Bulk',
+    'Price',
+    'Quantity',
+    'Total Price'
+  ].join(',');
+  const tableBody = items.value
+    .map(
+      (item) =>
+        `${item.name},${item.owner},${item.type},${item.bulk},${item.price},${
+          item.quantity
+        },${item.price * item.quantity}`
+    )
     .join('\n');
-  const csv = csvHeader + csvData;
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
+
+  const csv = `${tableHeader}\n${tableBody}`;
   const a = document.createElement('a');
-  a.href = url;
-  a.download = 'inventory.csv';
+  a.href = URL.createObjectURL(
+    new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  );
+  a.download = 'items.csv';
   a.click();
-  URL.revokeObjectURL(url);
 }
 
-const excludeTypes = [
-  'ancestry',
-  'heritage',
-  'background',
-  'class',
-  'feat',
-  'lore',
-  'action'
-];
+async function eraseAllData() {
+  confirm('Are you sure you want to erase ALL the data?') &&
+    (await axios.delete('/erase')) &&
+    fetchData();
+}
 
-const sortMode = ref({ by: 'name', order: 'asc' });
-
-const items = computed(() => {
-  if (!data.value) return [];
-  return data.value.items
-    .filter((item: any) => {
-      return !excludeTypes.includes(item.type);
-    })
-    .sort((a: any, b: any) => {
-      switch (sortMode.value.by) {
-        case 'name':
-          return sortMode.value.order === 'asc'
-            ? a.name.localeCompare(b.name)
-            : b.name.localeCompare(a.name);
-        case 'level':
-          return sortMode.value.order === 'asc'
-            ? a.system.level.value - b.system.level.value
-            : b.system.level.value - a.system.level.value;
-        case 'type':
-          return sortMode.value.order === 'asc'
-            ? a.type.localeCompare(b.type)
-            : b.type.localeCompare(a.type);
-        case 'price':
-          const flatPriceA = flattenPrice(a.system.price.value);
-          const flatPriceB = flattenPrice(b.system.price.value);
-          const totalA = flatPriceA * (a.system.quantity || 0);
-          const totalB = flatPriceB * (b.system.quantity || 0);
-          return sortMode.value.order === 'asc'
-            ? totalA - totalB
-            : totalB - totalA;
-        default:
-          return 0;
-      }
-    });
-});
-
-const inventoryValue = computed(() => {
-  const allItemValues = items.value.map((item: any) => {
-    const flatPrice = flattenPrice(item.system.price.value);
-    return flatPrice * (item.system.quantity || 0);
-  });
+const totalValue = computed(() => {
   let total = 0;
-  for (const value of allItemValues) {
-    total += value;
-    total = Math.round((total + value) * 100) / 100;
-  }
+  items.value.forEach((item) => {
+    total = Math.round((total + item.price * item.quantity) * 100) / 100;
+  });
   return total;
 });
-
-function onClickSort(by: string) {
-  if (sortMode.value.by === by) {
-    sortMode.value.order = sortMode.value.order === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortMode.value.by = by;
-    sortMode.value.order = 'asc';
-  }
-}
-
-const selectedItem = ref(null as any);
 </script>
 
 <style lang="scss" scoped>
-.app {
-  height: 100vh;
+.layout {
   display: flex;
   flex-direction: column;
-}
-
-header {
+  gap: 1.2rem;
   padding: 1.2rem;
-  > section.controls {
-    width: 100%;
-    display: flex;
-    justify-content: flex-end;
-    gap: 1.2rem;
-  }
-  > h1 {
-    font-size: 4rem;
-    text-align: center;
-  }
-  border-bottom: 1px solid var(--surface-3);
+  height: 100vh;
+  width: 100%;
 }
 
 .container {
-  padding: 1.2rem;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 1.2rem;
-  height: 100%;
-  overflow: hidden;
 
-  ul {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(36rem, 1fr));
+  &--center {
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.manage-data {
+  display: flex;
+  gap: 1.2rem;
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .panel {
+    align-items: center;
+    i {
+      font-size: 2.4rem;
+    }
+  }
+
+  .file-list {
+    display: flex;
+    justify-content: flex-end;
+    flex: 1;
     gap: 1.2rem;
-    height: min-content;
-    max-height: 100%;
-    overflow: auto;
+  }
+}
 
-    > li {
-      height: 100%;
-      .item-card {
-        cursor: pointer;
-        &.selected {
-          box-shadow: none;
-          opacity: 0.6;
-          pointer-events: none;
+.users ul {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+ul.items-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(28rem, 1fr));
+  gap: 1.2rem;
+
+  > li {
+    position: relative;
+    header {
+      display: flex;
+
+      > h2 {
+        display: flex;
+        width: 100%;
+        > span {
+          white-space: nowrap;
         }
+
+        > span.name {
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    .attributes {
+      display: flex;
+      gap: 0.4rem;
+      width: 100%;
+      justify-content: space-between;
+
+      > div {
+        display: flex;
+        gap: 0.4rem;
       }
     }
   }
 }
 
-.sort-options {
-  padding: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.8rem;
+.change-user {
+  margin-left: auto;
+}
 
-  > section {
-    display: flex;
-    justify-content: center;
-    gap: 1.2rem;
-  }
+.level {
+  position: absolute;
+  padding: 0.3rem 0.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  top: -0.6rem;
+  left: -0.6rem;
+  border-radius: 5px;
+  background-color: var(--dark);
+  color: var(--light);
 }
 </style>
