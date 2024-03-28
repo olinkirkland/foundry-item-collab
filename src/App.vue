@@ -31,8 +31,8 @@
 
     <!-- GM only-->
     <div class="container" v-if="me?.isGM">
-      <panel>
-        <h1>GM Only</h1>
+      <panel class="gm-dashboard">
+        <h1>GM Dashboard</h1>
         <div class="manage-data">
           <div class="controls">
             <button @click="uploadFoundryFile">
