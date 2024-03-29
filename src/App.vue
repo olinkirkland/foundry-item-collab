@@ -153,10 +153,14 @@
                 <span class="name">{{ item.name }}</span>
                 <div>
                   <span class="muted" v-if="item.quantity > 1">
-                    ({{ item.quantity }}x ${{ item.price }})&nbsp;
+                    ({{ item.quantity }}x
+                    <i class="fas fa-coins"></i>
+                    {{ item.price }})&nbsp;
                   </span>
                   <i class="fas fa-coins"></i>
-                  <span>{{ item.price * item.quantity }}</span>
+                  <span>{{
+                    Math.round(item.price * item.quantity * 100) / 100
+                  }}</span>
                 </div>
               </h2>
             </header>
@@ -170,10 +174,12 @@
               <div>
                 <p>
                   <span v-if="item.quantity > 1" class="muted">
-                    ({{ item.quantity }}x {{ item.bulk }})&nbsp;
+                    ({{ item.quantity }}x
+                    <i class="fas fa-weight-hanging"></i>
+                    {{ item.bulk }})&nbsp;
                   </span>
                   <i class="fas fa-weight-hanging"></i>
-                  {{ item.bulk * item.quantity }}
+                  {{ Math.round(item.bulk * item.quantity * 100) / 100 }}
                 </p>
               </div>
             </div>
