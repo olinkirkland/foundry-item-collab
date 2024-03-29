@@ -57,10 +57,10 @@
             </div>
           </div>
           <div class="file-list">
-            <panel v-for="user in users.filter((u) => !u.isGM)" :key="user._id">
-              <i class="fas fa-file-archive"></i>
+            <div v-for="user in users.filter((u) => !u.isGM)" :key="user._id">
+              <i class="fas fa-check"></i>
               <p>{{ user.name }}</p>
-            </panel>
+            </div>
           </div>
         </div>
       </panel>
@@ -428,8 +428,16 @@ const totalSaleValue = computed(() => {
   .file-list {
     display: flex;
     justify-content: flex-end;
+    align-items: flex-end;
     flex: 1;
-    gap: 1.2rem;
+    gap: 2rem;
+
+    > div {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      opacity: 0.6;
+    }
   }
 }
 
