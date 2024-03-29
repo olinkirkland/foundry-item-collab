@@ -54,7 +54,7 @@ button {
   }
 
   &:active,
-  .active {
+  &.active {
     filter: brightness(0.8);
     border-bottom: 0.2rem solid var(--dark);
     margin-top: 0.2rem;
@@ -72,14 +72,14 @@ pre {
   overflow-x: auto;
 }
 
-// Media query for phones
-@media (max-width: 768px) {
-}
-
 .row {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+}
+
+.wrap {
+  flex-wrap: wrap;
 }
 
 .muted {
@@ -89,4 +89,17 @@ pre {
 .disabled {
   pointer-events: none;
   opacity: 0.4;
+}
+
+// Media query for tablets
+@media (max-width: 1024px) {
+  .container.container--collection {
+    > .row.wrap {
+      justify-content: center;
+    }
+  }
+}
+
+// Media query for phones
+@media (max-width: 768px) {
 }

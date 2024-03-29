@@ -32,7 +32,15 @@
     <!-- GM only-->
     <div class="container" v-if="me?.isGM">
       <panel class="gm-dashboard">
-        <h1>GM Dashboard</h1>
+        <div class="row">
+          <h1>GM Dashboard</h1>
+          <div class="file-list">
+            <div v-for="user in users.filter((u) => !u.isGM)" :key="user._id">
+              <i class="fas fa-check"></i>
+              <p>{{ user.name }}</p>
+            </div>
+          </div>
+        </div>
         <div class="manage-data">
           <div class="controls">
             <button @click="uploadFoundryFile">
@@ -56,93 +64,90 @@
               </button>
             </div>
           </div>
-          <div class="file-list">
-            <div v-for="user in users.filter((u) => !u.isGM)" :key="user._id">
-              <i class="fas fa-check"></i>
-              <p>{{ user.name }}</p>
-            </div>
-          </div>
         </div>
       </panel>
     </div>
 
     <!-- All users -->
-    <div class="container" v-if="me">
-      <div class="row">
-        <button @click="fetchItems">
-          <i class="fas fa-sync"></i>
-        </button>
-        <p>{{ sortedAndFilteredItems.length }}/{{ items.length }} Items</p>
-        <p class="muted">|</p>
-        <p>
-          Owned Items:&nbsp;
-          <i class="fas fa-coins"></i>
-          {{ totalValue }}
-        </p>
-        <p class="muted">|</p>
-        <p>
-          For Sale:&nbsp;
-          <i class="fas fa-coins"></i>
-          {{ totalSaleValue }}
-        </p>
-        <p class="sort-by">Sort by</p>
-        <button
-          @click="sort('name')"
-          :class="sortBy.key === 'name' ? 'active' : ''"
-        >
-          <i
-            :class="`fas fa-sort-alpha-${
-              sortBy.key === 'name' && sortBy.order === 'asc' ? 'down' : 'up'
-            }`"
-          ></i>
-          Name
-        </button>
-        <button
-          @click="sort('price')"
-          :class="sortBy.key === 'price' ? 'active' : ''"
-        >
-          <i
-            :class="`fas fa-sort-numeric-${
-              sortBy.key === 'price' && sortBy.order === 'asc' ? 'down' : 'up'
-            }`"
-          ></i>
-          Price
-        </button>
-        <button
-          @click="sort('level')"
-          :class="sortBy.key === 'level' ? 'active' : ''"
-        >
-          <i
-            :class="`fas fa-sort-numeric-${
-              sortBy.key === 'level' && sortBy.order === 'asc' ? 'down' : 'up'
-            }`"
-          ></i>
-          Level
-        </button>
-        <p class="muted">|</p>
-        <button
-          v-if="!me?.isGM"
-          @click="showOnlyMyOwnedItems = !showOnlyMyOwnedItems"
-        >
-          {{
-            showOnlyMyOwnedItems
-              ? `Show All (${items.length})`
-              : `Show Only my Items (${
-                  items.filter((i) => i.owner == me?.name).length
-                })`
-          }}
-        </button>
-        <button v-else @click="showOnlyItemsForSale = !showOnlyItemsForSale">
-          {{
-            showOnlyItemsForSale
-              ? `Show All (${items.length})`
-              : `Show Only Items for Sale (${
-                  items.filter((i) => !i.owner).length
-                })`
-          }}
-        </button>
-        <p class="muted">|</p>
-        <button @click="me = null">Change User</button>
+    <div class="container container--collection" v-if="me">
+      <div class="row wrap">
+        <div class="row">
+          <button @click="fetchItems">
+            <i class="fas fa-sync"></i>
+          </button>
+          <p>{{ sortedAndFilteredItems.length }}/{{ items.length }} Items</p>
+          <p class="muted">|</p>
+          <p>
+            Owned Items:&nbsp;
+            <i class="fas fa-coins"></i>
+            {{ totalValue }}
+          </p>
+          <p class="muted">|</p>
+          <p>
+            For Sale:&nbsp;
+            <i class="fas fa-coins"></i>
+            {{ totalSaleValue }}
+          </p>
+        </div>
+        <div class="row sort-by">
+          <button
+            @click="sort('name')"
+            :class="sortBy.key === 'name' ? 'active' : ''"
+          >
+            <i
+              :class="`fas fa-sort-alpha-${
+                sortBy.key === 'name' && sortBy.order === 'asc' ? 'down' : 'up'
+              }`"
+            ></i>
+            Name
+          </button>
+          <button
+            @click="sort('price')"
+            :class="sortBy.key === 'price' ? 'active' : ''"
+          >
+            <i
+              :class="`fas fa-sort-numeric-${
+                sortBy.key === 'price' && sortBy.order === 'asc' ? 'down' : 'up'
+              }`"
+            ></i>
+            Price
+          </button>
+          <button
+            @click="sort('level')"
+            :class="sortBy.key === 'level' ? 'active' : ''"
+          >
+            <i
+              :class="`fas fa-sort-numeric-${
+                sortBy.key === 'level' && sortBy.order === 'asc' ? 'down' : 'up'
+              }`"
+            ></i>
+            Level
+          </button>
+          <p class="muted">|</p>
+          <button
+            v-if="!me?.isGM"
+            @click="showOnlyMyOwnedItems = !showOnlyMyOwnedItems"
+          >
+            {{
+              showOnlyMyOwnedItems
+                ? `Show All (${items.length})`
+                : `Show Only my Items (${
+                    items.filter((i) => i.owner == me?.name).length
+                  })`
+            }}
+          </button>
+          <button v-else @click="showOnlyItemsForSale = !showOnlyItemsForSale">
+            {{
+              showOnlyItemsForSale
+                ? `Show All (${items.length})`
+                : `Show Only Items for Sale (${
+                    items.filter((i) => !i.owner).length
+                  })`
+            }}
+          </button>
+          <p class="muted">|</p>
+          <button @click="me = null">Change User</button>
+        </div>
       </div>
       <ul class="items-list">
         <li v-for="item in sortedAndFilteredItems" :key="item.id">
@@ -408,13 +413,27 @@ const totalSaleValue = computed(() => {
   }
 }
 
+.file-list {
+  display: flex;
+  flex: 1;
+  gap: 2rem;
+  justify-content: flex-end;
+
+  > div {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    opacity: 0.6;
+  }
+}
+
 .manage-data {
   display: flex;
+  flex-direction: column;
   gap: 1.2rem;
 
   .controls {
     display: flex;
-    flex-direction: column;
     gap: 0.8rem;
   }
 
@@ -422,21 +441,6 @@ const totalSaleValue = computed(() => {
     align-items: center;
     i {
       font-size: 2.4rem;
-    }
-  }
-
-  .file-list {
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-end;
-    flex: 1;
-    gap: 2rem;
-
-    > div {
-      display: flex;
-      gap: 0.8rem;
-      align-items: center;
-      opacity: 0.6;
     }
   }
 }
@@ -519,5 +523,19 @@ ul.items-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
+}
+
+.container--collection {
+  > .row {
+    justify-content: center;
+  }
+
+  > .row.wrap {
+    justify-content: space-between;
+  }
+
+  .sort-by {
+    margin-left: unset;
+  }
 }
 </style>
