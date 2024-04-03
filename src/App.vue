@@ -1,12 +1,5 @@
 <template>
-  <div class="layout" v-if="!isLoaded">
-    <div class="container container--center">
-      <panel>
-        <h2>Loading...</h2>
-      </panel>
-    </div>
-  </div>
-  <div class="layout" v-else>
+  <div class="layout" v-if="!initiallyLoading">
     <!-- Choose user -->
     <div class="container container--center" v-if="!me">
       <panel>
@@ -71,7 +64,7 @@
     <!-- All users -->
     <div class="container container--collection" v-if="me">
       <div class="row wrap">
-        <div class="row">
+        <div class="row" style="height: 4rem">
           <button @click="fetchItems">
             <i class="fas fa-sync"></i>
           </button>
@@ -188,14 +181,27 @@
                 </p>
               </div>
             </div>
-            <div v-if="me.isGM" class="gm-give-item">
+            <div v-if="me.isGM" class="controls">
               <button
+                class="split"
+                :class="{ disabled: item.quantity < 2 }"
+                @click="onClickSplit(item)"
+                :style="{
+                  backgroundColor: 'var(--grey)',
+                  color: 'var(--dark)'
+                }"
+              >
+                <i class="fas fa-cut"></i>
+              </button>
+              <button
+                class="sell"
                 @click="giveItem(item.id, null)"
                 :class="{ active: !item.owner }"
               >
                 <i class="fas fa-coins"></i>
-                Sell</button
-              ><button
+                Sell
+              </button>
+              <button
                 v-for="user in users.filter((u) => !u.isGM)"
                 :class="{ active: item.owner === user.name }"
                 :key="user._id"
@@ -205,26 +211,44 @@
                 {{ user.name }}
               </button>
             </div>
-
-            <button
-              v-else
-              @click="giveItem(item.id, !!item.owner ? null : me?.name)"
-            >
-              <i :class="item.owner ? 'fas fa-coins' : 'fas fa-mitten'"></i>
-              {{ item.owner ? 'Sell' : 'Claim' }}
-            </button>
+            <div v-else class="controls">
+              <button
+                @click="onClickSplit(item)"
+                class="split"
+                :class="{ disabled: item.quantity < 2 }"
+                :style="{
+                  backgroundColor: 'var(--grey)',
+                  color: 'var(--dark)'
+                }"
+              >
+                <i class="fas fa-cut"></i>
+              </button>
+              <button
+                class="sell"
+                @click="giveItem(item.id, item.owner ? null : me.name)"
+              >
+                <i :class="item.owner ? 'fas fa-coins' : 'fas fa-mitten'"></i>
+                {{ item.owner ? 'Sell' : 'Claim' }}
+              </button>
+            </div>
           </panel>
         </li>
       </ul>
     </div>
   </div>
+  <modal-container />
 </template>
 
 <script setup lang="ts">
 import axios from 'axios';
 import { computed, ref } from 'vue';
-import Panel from './components/Panel.vue';
+import { ModalController } from './controllers/modal-controller';
+import ConfirmModal from './modals/ConfirmModal.vue';
+import LoadingModal from './modals/LoadingModal.vue';
+import ModalContainer from './modals/ModalContainer.vue';
+import SplitItemModal from './modals/SplitItemModal.vue';
 import { Item, User } from './types';
+import wait from './wait';
 
 // If running on localhost, use the local server
 axios.defaults.baseURL =
@@ -235,7 +259,10 @@ axios.defaults.baseURL =
 axios.defaults.withCredentials = true;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
-const isLoaded = ref(false);
+const initiallyLoading = ref(true);
+// After 0.2s, set initiallyLoading to false
+setTimeout(() => (initiallyLoading.value = false), 200);
+
 const users = ref([] as User[]);
 const items = ref([] as Item[]);
 const me = ref(null as User | null);
@@ -297,9 +324,11 @@ function setUserById(id: string) {
 }
 
 async function fetchData() {
-  isLoaded.value = false;
+  await wait();
+  ModalController.open(LoadingModal);
+  await wait();
   await Promise.all([fetchUsers(), fetchItems()]);
-  isLoaded.value = true;
+  ModalController.close();
 }
 
 async function fetchUsers() {
@@ -326,13 +355,18 @@ function uploadFoundryFile() {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
 
-    isLoaded.value = false;
+    ModalController.open(LoadingModal);
     const fileData = await file.text();
     const minifiedFileData = JSON.stringify(JSON.parse(fileData));
-    await axios.post('/upload', minifiedFileData, {
-      headers: { 'Content-Type': 'application/json' }
-    });
-    fetchData();
+    try {
+      await axios.post('/upload', minifiedFileData, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      fetchData();
+    } catch (error) {
+      console.error(error);
+      // ModalController.close();
+    }
   };
   input.click();
 }
@@ -367,9 +401,14 @@ function downloadCSV() {
 }
 
 async function eraseAllData() {
-  confirm('Are you sure you want to erase ALL the data?') &&
-    ((isLoaded.value = false), await axios.delete('/erase')) &&
-    fetchData();
+  ModalController.open(ConfirmModal, {
+    prompt: 'Are you sure you want to erase ALL the data?',
+    onConfirm: async () => {
+      ModalContainer.open(LoadingModal);
+      await axios.delete('/erase');
+      fetchData();
+    }
+  });
 }
 
 const totalValue = computed(() => {
@@ -389,6 +428,10 @@ const totalSaleValue = computed(() => {
   });
   return total;
 });
+
+function onClickSplit(item: Item) {
+  ModalController.open(SplitItemModal, { item, onClose: fetchData });
+}
 </script>
 
 <style lang="scss" scoped>
@@ -515,14 +558,37 @@ ul.items-list {
   color: var(--light);
 }
 
-.for-sale {
+.panel.for-sale {
   background-color: var(--yellow);
 }
 
-.gm-give-item {
+.controls {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
+
+  > button {
+    min-width: 40%;
+    flex: 1;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  > button.split {
+    width: fit-content;
+    min-width: 4rem;
+    flex: 0;
+  }
+
+  > button.sell {
+    flex: 1;
+    background-color: var(--yellow);
+    color: var(--dark);
+    // minimum width fit the whole row size
+    min-width: 60%;
+  }
 }
 
 .container--collection {

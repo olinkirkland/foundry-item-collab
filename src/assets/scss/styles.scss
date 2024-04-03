@@ -35,10 +35,12 @@ body {
 }
 
 button {
+  position: relative;
   background-color: var(--primary);
   color: var(--light);
   width: fit-content;
-  height: fit-content;
+  height: 4rem;
+  max-height: 4rem;
   padding: 0.8rem 1.2rem;
   border-radius: 5px;
   border: 0.2rem solid var(--dark);
@@ -50,16 +52,21 @@ button {
   transition: all 0.1s;
 
   &:hover {
-    filter: brightness(1.2);
+    filter: brightness(1.05);
   }
 
   &:active,
   &.active {
     filter: brightness(0.8);
     border-bottom: 0.2rem solid var(--dark);
-    margin-top: 0.2rem;
+    top: 0.2rem;
     transition: none;
   }
+}
+
+.full-width {
+  width: 100%;
+  justify-content: center;
 }
 
 pre {
@@ -89,6 +96,15 @@ pre {
 .disabled {
   pointer-events: none;
   opacity: 0.4;
+}
+
+.primary {
+  color: var(--primary);
+  font-weight: bold;
+}
+
+.modal {
+  max-width: 40rem;
 }
 
 // Media query for tablets
