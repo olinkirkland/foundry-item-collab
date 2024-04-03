@@ -1,17 +1,9 @@
 <template>
   <panel class="modal">
-    <h2>{{ prompt }}</h2>
+    <h2>{{ title }}</h2>
+    <p v-html="message"></p>
     <div class="row">
-      <button
-        @click="onClickConfirm"
-        :style="{
-          backgroundColor: 'var(--grey)',
-          color: 'var(--dark)'
-        }"
-      >
-        Confirm
-      </button>
-      <button @click="onClickClose">Cancel</button>
+      <button @click="onClickClose">Ok</button>
     </div>
   </panel>
 </template>
@@ -20,12 +12,12 @@
 import { PropType } from 'vue';
 import { ModalController } from '../controllers/modal-controller';
 const props = defineProps({
-  prompt: {
+  title: {
     type: String,
     required: true
   },
-  onConfirm: {
-    type: Function as PropType<() => void>,
+  message: {
+    type: String,
     required: true
   },
   onClose: {
@@ -34,14 +26,14 @@ const props = defineProps({
   }
 });
 
-async function onClickConfirm() {
-  props.onConfirm();
-}
-
 function onClickClose() {
   props.onClose?.();
   ModalController.close();
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.modal {
+  min-width: 32rem;
+}
+</style>

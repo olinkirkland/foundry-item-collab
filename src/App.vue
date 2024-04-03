@@ -36,24 +36,35 @@
         </div>
         <div class="manage-data">
           <div class="controls">
-            <button @click="uploadFoundryFile">
+            <button @click="onClickUploadFoundryFile">
               <i class="fas fa-upload"></i>
               Upload Foundry Character File (*.json)
             </button>
             <div class="row">
+              <button @click="onClickDownloadCSV">
+                <i class="fas fa-file-csv"></i>
+                Download CSV
+              </button>
               <button
-                @click="eraseAllData"
+                @click="onClickEraseAllData"
                 :style="{
                   backgroundColor: 'var(--grey)',
-                  color: 'var(--dark)'
+                  color: 'var(--dark)',
+                  marginLeft: 'auto'
                 }"
               >
                 <i class="fas fa-trash"></i>
                 Erase All Data
               </button>
-              <button @click="downloadCSV">
-                <i class="fas fa-file-csv"></i>
-                Download CSV
+              <button
+                @click="onClickMerge"
+                :style="{
+                  backgroundColor: 'var(--grey)',
+                  color: 'var(--dark)'
+                }"
+              >
+                <i class="fas fa-compress-alt"></i>
+                Merge All
               </button>
             </div>
           </div>
@@ -181,7 +192,7 @@
                 </p>
               </div>
             </div>
-            <div v-if="me.isGM" class="controls">
+            <div v-if="me.isGM" class="item-controls">
               <button
                 class="split"
                 :class="{ disabled: item.quantity < 2 }"
@@ -211,7 +222,7 @@
                 {{ user.name }}
               </button>
             </div>
-            <div v-else class="controls">
+            <div v-else class="item-controls">
               <button
                 @click="onClickSplit(item)"
                 class="split"
@@ -224,7 +235,7 @@
                 <i class="fas fa-cut"></i>
               </button>
               <button
-                class="sell"
+                :class="{ sell: item.owner }"
                 @click="giveItem(item.id, item.owner ? null : me.name)"
               >
                 <i :class="item.owner ? 'fas fa-coins' : 'fas fa-mitten'"></i>
@@ -244,6 +255,7 @@ import axios from 'axios';
 import { computed, ref } from 'vue';
 import { ModalController } from './controllers/modal-controller';
 import ConfirmModal from './modals/ConfirmModal.vue';
+import InfoModal from './modals/InfoModal.vue';
 import LoadingModal from './modals/LoadingModal.vue';
 import ModalContainer from './modals/ModalContainer.vue';
 import SplitItemModal from './modals/SplitItemModal.vue';
@@ -347,7 +359,7 @@ async function giveItem(itemId: string, userId: string | null) {
   items.value[index] = item.data;
 }
 
-function uploadFoundryFile() {
+function onClickUploadFoundryFile() {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json';
@@ -371,7 +383,7 @@ function uploadFoundryFile() {
   input.click();
 }
 
-function downloadCSV() {
+function onClickDownloadCSV() {
   // Item Name, Owner, Type, Price, Quantity, Total Price
   const tableHeader = [
     'Item Name',
@@ -400,11 +412,11 @@ function downloadCSV() {
   a.click();
 }
 
-async function eraseAllData() {
+async function onClickEraseAllData() {
   ModalController.open(ConfirmModal, {
     prompt: 'Are you sure you want to erase ALL the data?',
     onConfirm: async () => {
-      ModalContainer.open(LoadingModal);
+      ModalController.open(LoadingModal);
       await axios.delete('/erase');
       fetchData();
     }
@@ -431,6 +443,36 @@ const totalSaleValue = computed(() => {
 
 function onClickSplit(item: Item) {
   ModalController.open(SplitItemModal, { item, onClose: fetchData });
+}
+
+function onClickMerge() {
+  ModalController.open(ConfirmModal, {
+    prompt:
+      'Are you sure you want to merge all items with the same belonging to the same owner?',
+    onConfirm: async () => {
+      ModalController.open(LoadingModal);
+      const mergeSummary: {
+        name: string;
+        owner: string;
+        quantity: number;
+      }[] = (await axios.post('/merge')).data;
+      const mergeSummaryHTML =
+        mergeSummary.length > 0
+          ? mergeSummary
+              .map(
+                (item) =>
+                  `• ${item.owner}'s <span class="primary">${item.name}</span> (x${item.quantity})`
+              )
+              .join('<br />')
+          : 'No items were merged.';
+      await fetchData();
+      wait();
+      ModalController.open(InfoModal, {
+        title: 'Merge Summary',
+        message: mergeSummaryHTML
+      });
+    }
+  });
 }
 </script>
 
@@ -475,9 +517,17 @@ function onClickSplit(item: Item) {
   flex-direction: column;
   gap: 1.2rem;
 
+  .row {
+    width: 100%;
+  }
+
   .controls {
     display: flex;
     gap: 0.8rem;
+
+    > button:first-child {
+      white-space: nowrap;
+    }
   }
 
   .panel {
@@ -562,7 +612,7 @@ ul.items-list {
   background-color: var(--yellow);
 }
 
-.controls {
+.item-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
